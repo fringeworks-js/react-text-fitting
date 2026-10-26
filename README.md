@@ -4,7 +4,7 @@
 
 **[日本語のREADMEはこちら](./README.ja.md)**
 
-The current version provides a hook for truncation (`useTruncateText`).
+The current version provides a hook for truncation (`useTruncateText`) and a hook for resizing (`useResizeText`).
 
 ## Installation
 
@@ -66,9 +66,10 @@ function Description({ text }: { text: string }) {
 
 ## API
 
-| Function                          | Description                                                                           |
-| --------------------------------- | ------------------------------------------------------------------------------------- |
-| `useTruncateText(text, options?)` | A hook that truncates a string to fit the element's size (width and height) and lines |
+| Function                          | Description                                                                              |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
+| `useTruncateText(text, options?)` | A hook that truncates a string to fit the element's size (width and height) and lines    |
+| `useResizeText(text, options?)`   | A hook that changes the font size to fit the element's size (width and height) and lines |
 
 ### `useTruncateText`
 
@@ -92,9 +93,48 @@ The options are the same as `createTruncateTextController` (`wrap`, `maxLines`, 
 | `style`       | `TextFittingStyle`         | The style to pass to the element (`whiteSpace`, and `overflowWrap` when `wrap` is `'anywhere'`) |
 | `refresh`     | `() => void`               | Measures again immediately with the current string and options                                  |
 
+### `useResizeText`
+
+```ts
+useResizeText(text: string, options?: UseResizeTextOptions): UseResizeTextResult
+```
+
+Changes the font size so that the text fits the element's size (width and height) and number of lines. It uses `createResizeTextController` from `@fringeworks/text-fitting`.
+
+- If `maxFontSize` is omitted, nothing changes when the text already fits; it only shrinks when the text overflows
+- If `maxFontSize` is specified, the text is enlarged up to that size as long as it fits (for example, to fill a dashboard tile with a number)
+- The returned `style` contains the selected `fontSize`. Specify the element's CSS font size with CSS, such as a class or inheritance from a parent (the element's inline `font-size` is overridden by `style`)
+- During server rendering and the first render of hydration, no font size is set (`fontSize` is `null`)
+
+```tsx
+function Kpi({ value }: { value: string }) {
+  const { ref, displayText, style } = useResizeText(value, {
+    maxFontSize: 64,
+  });
+  return (
+    <div ref={ref} className="kpi" style={style}>
+      {displayText}
+    </div>
+  );
+}
+```
+
+The options are the same as `createResizeTextController` (`minFontSize`, `maxFontSize`, `wrap`, `maxLines`, `disabled`).
+
+| Property        | Type                       | Description                                                                                            |
+| --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `ref`           | `RefCallback<HTMLElement>` | The ref to pass to the element                                                                         |
+| `displayText`   | `string`                   | The text to display (the original string as is)                                                        |
+| `fontSize`      | `number \| null`           | The selected font size (px). `null` while not yet measured and while stopped                           |
+| `isOverflowing` | `boolean \| null`          | Whether the text does not fit even at the lower limit. `null` while not yet measured and while stopped |
+| `style`         | `ResizeTextStyle`          | The style to pass to the element (`whiteSpace`, `overflowWrap`, and the selected `fontSize`)           |
+| `refresh`       | `() => void`               | Measures again immediately with the current string and options                                         |
+
 ### Types
 
 | Type                     | Description                                                            |
 | ------------------------ | ---------------------------------------------------------------------- |
 | `UseTruncateTextOptions` | Options of `useTruncateText` (same as `TruncateTextControllerOptions`) |
 | `UseTruncateTextResult`  | The return value of `useTruncateText`                                  |
+| `UseResizeTextOptions`   | Options of `useResizeText` (same as `ResizeTextControllerOptions`)     |
+| `UseResizeTextResult`    | The return value of `useResizeText`                                    |

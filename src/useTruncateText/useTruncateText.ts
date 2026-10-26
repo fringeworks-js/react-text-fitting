@@ -1,13 +1,7 @@
 'use client';
 
 import { createTruncateTextController } from '@fringeworks/text-fitting';
-import {
-  useCallback,
-  useLayoutEffect,
-  useReducer,
-  useState,
-  useSyncExternalStore,
-} from 'react';
+import useFittingController from '../_internal/_useFittingController';
 import type { UseTruncateTextOptions, UseTruncateTextResult } from './types';
 
 /**
@@ -27,34 +21,5 @@ export default function useTruncateText(
   text: string,
   options?: UseTruncateTextOptions,
 ): UseTruncateTextResult {
-  // Controller は再描画の間も同じものを使い続ける
-  const [controller] = useState(() =>
-    createTruncateTextController(text, options),
-  );
-  const snapshot = useSyncExternalStore(
-    controller.subscribe,
-    controller.getSnapshot,
-    controller.getSnapshot,
-  );
-  const [, rerender] = useReducer((count: number) => count + 1, 0);
-
-  // 要素を外したときは監視を止める。Controller は破棄しない（StrictMode で作り直さずに使い続けるため）
-  const ref = useCallback(
-    (element: HTMLElement | null) => {
-      controller.attach(element);
-    },
-    [controller],
-  );
-
-  useLayoutEffect(() => {
-    // 値が変わらなければ、Controller は何もしない
-    controller.update(text, options);
-    // useSyncExternalStore の購読は描画の後に始まるため、接続したときの計測の結果は届かない。
-    // 画面に表示する前に描画し直し、元の文字列が一瞬見えないようにする
-    if (controller.getSnapshot() !== snapshot) {
-      rerender();
-    }
-  });
-
-  return { ...snapshot, ref, refresh: controller.refresh };
+  return useFittingController(createTruncateTextController, text, options);
 }

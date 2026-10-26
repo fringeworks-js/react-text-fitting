@@ -1,6 +1,6 @@
 {
   "name": "@fringeworks/react-text-fitting",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A library some will find handy, offering React hooks for @fringeworks/text-fitting, which fits text into an element by truncating it, resizing it, or choosing among candidates.",
   "keywords": [
@@ -37,7 +37,7 @@
     "tidy": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\" --config ./prettier.tidy.config.ts"
   },
   "dependencies": {
-    "@fringeworks/text-fitting": "^0.1.1"
+    "@fringeworks/text-fitting": "^0.2.0"
   },
   "devDependencies": {
     "@fringeworks/dev": "^0.13.2",

@@ -4,7 +4,7 @@
 
 **[English README is available here](./README.md)**
 
-現在のバージョンでは、省略する hook（`useTruncateText`）を提供しています。
+現在のバージョンでは、省略する hook（`useTruncateText`）と、文字の大きさを変える hook（`useResizeText`）を提供しています。
 
 ## インストール
 
@@ -66,9 +66,10 @@ function Description({ text }: { text: string }) {
 
 ## API
 
-| 関数                              | 説明                                                                |
-| --------------------------------- | ------------------------------------------------------------------- |
-| `useTruncateText(text, options?)` | 要素の大きさ（幅・高さ）と行数に収まるように、文字列を省略する hook |
+| 関数                              | 説明                                                                    |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `useTruncateText(text, options?)` | 要素の大きさ（幅・高さ）と行数に収まるように、文字列を省略する hook     |
+| `useResizeText(text, options?)`   | 要素の大きさ（幅・高さ）と行数に収まるように、文字の大きさを変える hook |
 
 ### `useTruncateText`
 
@@ -92,9 +93,48 @@ useTruncateText(text: string, options?: UseTruncateTextOptions): UseTruncateText
 | `style`       | `TextFittingStyle`         | 表示する要素に渡すスタイル（`whiteSpace` と、`wrap: 'anywhere'` のときの `overflowWrap`） |
 | `refresh`     | `() => void`               | 今の文字列とオプションで、その場で計測し直す                                              |
 
+### `useResizeText`
+
+```ts
+useResizeText(text: string, options?: UseResizeTextOptions): UseResizeTextResult
+```
+
+要素の大きさ（幅・高さ）と行数に収まるように、文字の大きさ（font-size）を変えます。`@fringeworks/text-fitting` の `createResizeTextController` を使っています。
+
+- `maxFontSize` を省略した場合は、そのままで収まれば何もせず、はみ出すときだけ縮めます
+- `maxFontSize` を指定すると、収まる限りその大きさまで大きくします（ダッシュボードの数値を枠いっぱいに表示する、など）
+- 戻り値の `style` に、選んだ `fontSize` が入ります。要素の CSS の font-size は、クラスや親の要素からの継承など、CSS で指定してください（要素のインラインの `font-size` は `style` で上書きされます）
+- サーバーでの描画と、ハイドレーションの初回の描画では、font-size を指定しません（`fontSize` は `null`）
+
+```tsx
+function Kpi({ value }: { value: string }) {
+  const { ref, displayText, style } = useResizeText(value, {
+    maxFontSize: 64,
+  });
+  return (
+    <div ref={ref} className="kpi" style={style}>
+      {displayText}
+    </div>
+  );
+}
+```
+
+オプションは `createResizeTextController` と同じです（`minFontSize`・`maxFontSize`・`wrap`・`maxLines`・`disabled`）。
+
+| プロパティ      | 型                         | 説明                                                                          |
+| --------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| `ref`           | `RefCallback<HTMLElement>` | 表示する要素に渡す ref                                                        |
+| `displayText`   | `string`                   | 表示する文字列（元の文字列のまま）                                            |
+| `fontSize`      | `number \| null`           | 選んだ font-size（px）。未計測の間と、止めている間は `null`                   |
+| `isOverflowing` | `boolean \| null`          | 下限の大きさでも収まらないか。未計測の間と、止めている間は `null`             |
+| `style`         | `ResizeTextStyle`          | 表示する要素に渡すスタイル（`whiteSpace`、`overflowWrap`、選んだ `fontSize`） |
+| `refresh`       | `() => void`               | 今の文字列とオプションで、その場で計測し直す                                  |
+
 ### 型
 
 | 型                       | 説明                                                                     |
 | ------------------------ | ------------------------------------------------------------------------ |
 | `UseTruncateTextOptions` | `useTruncateText` のオプション（`TruncateTextControllerOptions` と同じ） |
 | `UseTruncateTextResult`  | `useTruncateText` の戻り値                                               |
+| `UseResizeTextOptions`   | `useResizeText` のオプション（`ResizeTextControllerOptions` と同じ）     |
+| `UseResizeTextResult`    | `useResizeText` の戻り値                                                 |
