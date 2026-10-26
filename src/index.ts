@@ -1,4 +1,13 @@
+export * from './ChooseText';
+export * from './FitText';
+export * from './ResizeText';
+export * from './TruncateText';
+export type * from './types';
 export * from './useChooseText';
 export * from './useFitText';
 export * from './useResizeText';
 export * from './useTruncateText';
+export * from './withChooseText';
+export * from './withFitText';
+export * from './withResizeText';
+export * from './withTruncateText';

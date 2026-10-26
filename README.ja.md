@@ -16,6 +16,34 @@ pnpm add @fringeworks/react-text-fitting
 
 ## 使い方
 
+### コンポーネント
+
+いちばん簡単な使い方です。`value` に値を渡し、機能のオプションをプロパティで指定します。
+
+```tsx
+import {
+  TruncateText,
+  withTruncateText,
+} from '@fringeworks/react-text-fitting';
+
+// できあいのコンポーネント（div を描く）
+<TruncateText value={description} wrap="normal" maxLines={2} />;
+
+// ほかの要素や、自作・外部の UI ライブラリのコンポーネントで描く
+const Title = withTruncateText('h2');
+<Title value={title} className="title" />;
+```
+
+- `TruncateText`・`ResizeText`・`ChooseText`・`FitText` は、それぞれ `withTruncateText('div')` などで作ったものです
+- 機能のオプション（`wrap`・`maxLines` など、hook と同じもの）以外のプロパティは、要素にそのまま渡します。`ref` も受け取れます
+- `style` は、ライブラリのスタイルの上に重ねます。同じプロパティは、指定したスタイルが優先されます（計測に使うスタイルを上書きすると、正しく動きません。下記）
+- 幅がレイアウトで決まるブロック要素で描いてください（インライン要素では働きません）
+- 省略したかどうか（`isTruncated`）などの結果は、コンポーネントからは受け取れません。「続きを読む」のボタンを出すときなどは、hook を使ってください
+
+### hook
+
+要素を自分で組みたいときや、結果を使いたいときは hook を使います。
+
 ```tsx
 import { useTruncateText } from '@fringeworks/react-text-fitting';
 
@@ -32,7 +60,21 @@ function Title({ text }: { text: string }) {
 }
 ```
 
-戻り値の `ref`・`displayText`・`style` を、同じ要素に渡してください。`style` を渡さないと、計測した書式と表示の書式がずれて、結果が正しくなりません。ほかのスタイルと合わせる場合は、`style` を後ろに重ねてください（`style={{ ...myStyle, ...style }}`）。
+戻り値の `ref`・`displayText`・`style` を、同じ要素に渡してください。`style` を渡さないと、計測した書式と表示の書式がずれて、結果が正しくなりません。
+
+ほかのスタイルとどう重ねるかは、利用者が決められます。ただし、次のプロパティは計測に使うので、自分のスタイルで上書きすると正しく動きません（上書きした場合の動作は保証しません。コンポーネントでも同じです）。
+
+| 機能                                                                                       | 計測に使うスタイル                       |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| 省略する・候補から選ぶ（`useTruncateText`・`useChooseText`・`TruncateText`・`ChooseText`） | `whiteSpace`・`overflowWrap`             |
+| 文字の大きさ・組み合わせ（`useResizeText`・`useFitText`・`ResizeText`・`FitText`）         | `whiteSpace`・`overflowWrap`・`fontSize` |
+
+```tsx
+// 自分のスタイルと合わせる例（計測に使うプロパティは、自分のスタイルに含めない）
+<h2 ref={ref} style={{ color: 'gray', ...style }}>
+  {displayText}
+</h2>
+```
 
 ### 「続きを読む」で全文を展開する
 
@@ -64,12 +106,17 @@ function Description({ text }: { text: string }) {
 
 ## API
 
-| 関数                                  | 説明                                                                                      |
-| ------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `useTruncateText(text, options?)`     | 要素の大きさ（幅・高さ）と行数に収まるように、文字列を省略する hook                       |
-| `useResizeText(text, options?)`       | 要素の大きさ（幅・高さ）と行数に収まるように、文字の大きさを変える hook                   |
-| `useChooseText(candidates, options?)` | 要素の大きさ（幅・高さ）と行数に収まる表現を、候補から選ぶ hook                           |
-| `useFitText(text, options?)`          | 候補を選ぶ・文字の大きさを変える・省略するを組み合わせて、要素の大きさと行数に収める hook |
+| 関数                                                  | 説明                                                                                      |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `useTruncateText(text, options?)`                     | 要素の大きさ（幅・高さ）と行数に収まるように、文字列を省略する hook                       |
+| `useResizeText(text, options?)`                       | 要素の大きさ（幅・高さ）と行数に収まるように、文字の大きさを変える hook                   |
+| `useChooseText(candidates, options?)`                 | 要素の大きさ（幅・高さ）と行数に収まる表現を、候補から選ぶ hook                           |
+| `useFitText(text, options?)`                          | 候補を選ぶ・文字の大きさを変える・省略するを組み合わせて、要素の大きさと行数に収める hook |
+| `withTruncateText(Component, options?)`               | `useTruncateText` の機能を持つコンポーネントを作る HOC                                    |
+| `withResizeText(Component, options?)`                 | `useResizeText` の機能を持つコンポーネントを作る HOC                                      |
+| `withChooseText(Component, options?)`                 | `useChooseText` の機能を持つコンポーネントを作る HOC                                      |
+| `withFitText(Component, options?)`                    | `useFitText` の機能を持つコンポーネントを作る HOC                                         |
+| `TruncateText`・`ResizeText`・`ChooseText`・`FitText` | 上の HOC で `div` を包んだ、できあいのコンポーネント                                      |
 
 ### `useTruncateText`
 
@@ -103,7 +150,7 @@ useResizeText(text: string, options?: UseResizeTextOptions): UseResizeTextResult
 
 - `maxFontSize` を省略した場合は、そのままで収まれば何もせず、はみ出すときだけ縮めます
 - `maxFontSize` を指定すると、収まる限りその大きさまで大きくします（ダッシュボードの数値を枠いっぱいに表示する、など）
-- 戻り値の `style` に、選んだ `fontSize` が入ります。要素の CSS の font-size は、クラスや親の要素からの継承など、CSS で指定してください（要素のインラインの `font-size` は `style` で上書きされます）
+- 戻り値の `style` に、選んだ `fontSize` が入ります。元にする font-size（調整が要らなかったときの大きさ）は、クラスや親の要素からの継承など、CSS で指定してください。自分のインラインのスタイルで `fontSize` を指定すると、計測が正しく働きません
 - サーバーでの描画と、ハイドレーションの初回の描画では、font-size を指定しません（`fontSize` は `null`）
 
 ```tsx
@@ -183,15 +230,44 @@ function Kpi({ value }: { value: number }) {
 
 戻り値は、`FitTextSnapshot`（`displayText`・`index`・`fontSize`・`isTruncated`・`isOverflowing`・`style`）に `ref` と `refresh` を加えたものです。文字の大きさを変える場合は、`useResizeText` と同じく、要素の CSS の font-size をクラスや継承で指定してください。
 
+### `withTruncateText`・`withResizeText`・`withChooseText`・`withFitText`
+
+```ts
+withTruncateText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): TruncateTextComponent<C>
+withResizeText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): ResizeTextComponent<C>
+withChooseText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): ChooseTextComponent<C>
+withFitText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): FitTextComponent<C>
+```
+
+それぞれの hook の機能を持つコンポーネントを作ります。`Component` には要素名（`'h2'` など）か、コンポーネントを渡します。作ったコンポーネントは、次のプロパティを受け取ります。
+
+| プロパティ       | 説明                                                                                                                                                                                     |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`          | 表示する値。`withTruncateText`・`withResizeText` は `string`、`withChooseText` は `readonly string[]`（1つの値の表現の候補。望ましい順）、`withFitText` は `string \| readonly string[]` |
+| 機能のオプション | 対応する hook のオプションと同じ（`wrap`・`maxLines`・`disabled` など）                                                                                                                  |
+| `style`          | ライブラリのスタイルの上に重ねる。同じプロパティは、指定したスタイルを優先する                                                                                                           |
+| `ref`            | 描いた要素を受け取る（ライブラリが使う ref と合成する）                                                                                                                                  |
+| その他           | `Component` にそのまま渡す                                                                                                                                                               |
+
+表示する文字列は、`Component` に `children` として渡します。そのため、作ったコンポーネントは `children` を受け取りません。
+
+| オプション     | 型       | 説明                                                                                   |
+| -------------- | -------- | -------------------------------------------------------------------------------------- |
+| `displayName?` | `string` | コンポーネントに設定する displayName。デフォルトは `withTruncateText(h2)` のような名前 |
+
 ### 型
 
-| 型                       | 説明                                                                     |
-| ------------------------ | ------------------------------------------------------------------------ |
-| `UseTruncateTextOptions` | `useTruncateText` のオプション（`TruncateTextControllerOptions` と同じ） |
-| `UseTruncateTextResult`  | `useTruncateText` の戻り値                                               |
-| `UseResizeTextOptions`   | `useResizeText` のオプション（`ResizeTextControllerOptions` と同じ）     |
-| `UseResizeTextResult`    | `useResizeText` の戻り値                                                 |
-| `UseChooseTextOptions`   | `useChooseText` のオプション（`ChooseTextControllerOptions` と同じ）     |
-| `UseChooseTextResult`    | `useChooseText` の戻り値                                                 |
-| `UseFitTextOptions`      | `useFitText` のオプション（`FitTextControllerOptions` と同じ）           |
-| `UseFitTextResult`       | `useFitText` の戻り値                                                    |
+| 型                                                                                                    | 説明                                                                     |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `UseTruncateTextOptions`                                                                              | `useTruncateText` のオプション（`TruncateTextControllerOptions` と同じ） |
+| `UseTruncateTextResult`                                                                               | `useTruncateText` の戻り値                                               |
+| `UseResizeTextOptions`                                                                                | `useResizeText` のオプション（`ResizeTextControllerOptions` と同じ）     |
+| `UseResizeTextResult`                                                                                 | `useResizeText` の戻り値                                                 |
+| `UseChooseTextOptions`                                                                                | `useChooseText` のオプション（`ChooseTextControllerOptions` と同じ）     |
+| `UseChooseTextResult`                                                                                 | `useChooseText` の戻り値                                                 |
+| `UseFitTextOptions`                                                                                   | `useFitText` のオプション（`FitTextControllerOptions` と同じ）           |
+| `UseFitTextResult`                                                                                    | `useFitText` の戻り値                                                    |
+| `TruncateTextProps<C>`・`ResizeTextProps<C>`・`ChooseTextProps<C>`・`FitTextProps<C>`                 | HOC で作ったコンポーネントのプロパティ                                   |
+| `TruncateTextComponent<C>`・`ResizeTextComponent<C>`・`ChooseTextComponent<C>`・`FitTextComponent<C>` | HOC で作ったコンポーネント                                               |
+| `WithTextFittingOptions`                                                                              | HOC のオプション                                                         |
+| `FittingProps<C, V, O>`・`FittingComponent<C, V, O>`                                                  | 上の型の元になる型（包むコンポーネント、値の型、オプションの型から作る） |

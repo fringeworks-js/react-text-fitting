@@ -16,6 +16,34 @@ pnpm add @fringeworks/react-text-fitting
 
 ## Usage
 
+### Components
+
+This is the simplest way to use the package. Pass the value to `value` and specify the feature's options as props.
+
+```tsx
+import {
+  TruncateText,
+  withTruncateText,
+} from '@fringeworks/react-text-fitting';
+
+// A ready-made component (renders a div)
+<TruncateText value={description} wrap="normal" maxLines={2} />;
+
+// Render with another element, or with your own or a UI library's component
+const Title = withTruncateText('h2');
+<Title value={title} className="title" />;
+```
+
+- `TruncateText`, `ResizeText`, `ChooseText`, and `FitText` are made with `withTruncateText('div')` and so on
+- Props other than the feature's options (`wrap`, `maxLines`, and so on, the same as the hooks) are passed to the element as is. `ref` is also accepted
+- `style` is layered on top of the library's style. For the same property, the style you specify wins (overriding the styles used for measuring breaks the behavior; see below)
+- Render with a block element whose width is determined by layout (it does not work on inline elements)
+- Results such as whether the text was truncated (`isTruncated`) are not available from the components. Use the hooks when you need them, for example to show a "Read more" button
+
+### Hooks
+
+Use the hooks when you want to build the element yourself or use the results.
+
 ```tsx
 import { useTruncateText } from '@fringeworks/react-text-fitting';
 
@@ -32,7 +60,21 @@ function Title({ text }: { text: string }) {
 }
 ```
 
-Pass the returned `ref`, `displayText`, and `style` to the same element. Without the `style`, the measured formatting and the displayed formatting differ, and the result will be wrong. To combine it with other styles, spread `style` last (`style={{ ...myStyle, ...style }}`).
+Pass the returned `ref`, `displayText`, and `style` to the same element. Without the `style`, the measured formatting and the displayed formatting differ, and the result will be wrong.
+
+You decide how to combine it with your other styles. However, the following properties are used for measuring, so overriding them with your own styles breaks the behavior (the behavior is not guaranteed if you override them; the same applies to the components).
+
+| Feature                                                                                    | Styles used for measuring                |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| Truncating and choosing (`useTruncateText`, `useChooseText`, `TruncateText`, `ChooseText`) | `whiteSpace`, `overflowWrap`             |
+| Resizing and combining (`useResizeText`, `useFitText`, `ResizeText`, `FitText`)            | `whiteSpace`, `overflowWrap`, `fontSize` |
+
+```tsx
+// Combining with your own styles (do not include the properties used for measuring)
+<h2 ref={ref} style={{ color: 'gray', ...style }}>
+  {displayText}
+</h2>
+```
 
 ### Expanding the full text with "Read more"
 
@@ -64,12 +106,17 @@ function Description({ text }: { text: string }) {
 
 ## API
 
-| Function                              | Description                                                                                                    |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `useTruncateText(text, options?)`     | A hook that truncates a string to fit the element's size (width and height) and lines                          |
-| `useResizeText(text, options?)`       | A hook that changes the font size to fit the element's size (width and height) and lines                       |
-| `useChooseText(candidates, options?)` | A hook that chooses, from candidates, the expression that fits the element's size (width and height) and lines |
-| `useFitText(text, options?)`          | A hook that fits text into the element's size and lines by combining choosing, resizing, and truncating        |
+| Function                                              | Description                                                                                                    |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `useTruncateText(text, options?)`                     | A hook that truncates a string to fit the element's size (width and height) and lines                          |
+| `useResizeText(text, options?)`                       | A hook that changes the font size to fit the element's size (width and height) and lines                       |
+| `useChooseText(candidates, options?)`                 | A hook that chooses, from candidates, the expression that fits the element's size (width and height) and lines |
+| `useFitText(text, options?)`                          | A hook that fits text into the element's size and lines by combining choosing, resizing, and truncating        |
+| `withTruncateText(Component, options?)`               | A HOC that creates a component with the features of `useTruncateText`                                          |
+| `withResizeText(Component, options?)`                 | A HOC that creates a component with the features of `useResizeText`                                            |
+| `withChooseText(Component, options?)`                 | A HOC that creates a component with the features of `useChooseText`                                            |
+| `withFitText(Component, options?)`                    | A HOC that creates a component with the features of `useFitText`                                               |
+| `TruncateText`, `ResizeText`, `ChooseText`, `FitText` | Ready-made components that wrap a `div` with the HOCs above                                                    |
 
 ### `useTruncateText`
 
@@ -103,7 +150,7 @@ Changes the font size so that the text fits the element's size (width and height
 
 - If `maxFontSize` is omitted, nothing changes when the text already fits; it only shrinks when the text overflows
 - If `maxFontSize` is specified, the text is enlarged up to that size as long as it fits (for example, to fill a dashboard tile with a number)
-- The returned `style` contains the selected `fontSize`. Specify the element's CSS font size with CSS, such as a class or inheritance from a parent (the element's inline `font-size` is overridden by `style`)
+- The returned `style` contains the selected `fontSize`. Specify the base font size (the size used when no adjustment is needed) with CSS, such as a class or inheritance from a parent. Setting `fontSize` in your own inline style breaks the measurement
 - During server rendering and the first render of hydration, no font size is set (`fontSize` is `null`)
 
 ```tsx
@@ -183,15 +230,44 @@ function Kpi({ value }: { value: number }) {
 
 The return value is `FitTextSnapshot` (`displayText`, `index`, `fontSize`, `isTruncated`, `isOverflowing`, `style`) plus `ref` and `refresh`. When resizing, specify the element's CSS font size with a class or inheritance, as with `useResizeText`.
 
+### `withTruncateText`, `withResizeText`, `withChooseText`, `withFitText`
+
+```ts
+withTruncateText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): TruncateTextComponent<C>
+withResizeText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): ResizeTextComponent<C>
+withChooseText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): ChooseTextComponent<C>
+withFitText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): FitTextComponent<C>
+```
+
+Creates a component with the features of each hook. Pass an element name (such as `'h2'`) or a component as `Component`. The created component accepts the following props.
+
+| Property        | Description                                                                                                                                                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`         | The value to display. `string` for `withTruncateText` and `withResizeText`, `readonly string[]` for `withChooseText` (representations of one value, from most to least preferred), and `string \| readonly string[]` for `withFitText` |
+| Feature options | The same as the options of the corresponding hook (`wrap`, `maxLines`, `disabled`, and so on)                                                                                                                                          |
+| `style`         | Layered on top of the library's style. For the same property, the style you specify wins                                                                                                                                               |
+| `ref`           | Receives the rendered element (combined with the ref the library uses)                                                                                                                                                                 |
+| Others          | Passed to `Component` as is                                                                                                                                                                                                            |
+
+The text to display is passed to `Component` as `children`, so the created component does not accept `children`.
+
+| Option         | Type     | Description                                                                         |
+| -------------- | -------- | ----------------------------------------------------------------------------------- |
+| `displayName?` | `string` | The displayName of the component. Defaults to a name such as `withTruncateText(h2)` |
+
 ### Types
 
-| Type                     | Description                                                            |
-| ------------------------ | ---------------------------------------------------------------------- |
-| `UseTruncateTextOptions` | Options of `useTruncateText` (same as `TruncateTextControllerOptions`) |
-| `UseTruncateTextResult`  | The return value of `useTruncateText`                                  |
-| `UseResizeTextOptions`   | Options of `useResizeText` (same as `ResizeTextControllerOptions`)     |
-| `UseResizeTextResult`    | The return value of `useResizeText`                                    |
-| `UseChooseTextOptions`   | Options of `useChooseText` (same as `ChooseTextControllerOptions`)     |
-| `UseChooseTextResult`    | The return value of `useChooseText`                                    |
-| `UseFitTextOptions`      | Options of `useFitText` (same as `FitTextControllerOptions`)           |
-| `UseFitTextResult`       | The return value of `useFitText`                                       |
+| Type                                                                                                  | Description                                                                                                |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `UseTruncateTextOptions`                                                                              | Options of `useTruncateText` (same as `TruncateTextControllerOptions`)                                     |
+| `UseTruncateTextResult`                                                                               | The return value of `useTruncateText`                                                                      |
+| `UseResizeTextOptions`                                                                                | Options of `useResizeText` (same as `ResizeTextControllerOptions`)                                         |
+| `UseResizeTextResult`                                                                                 | The return value of `useResizeText`                                                                        |
+| `UseChooseTextOptions`                                                                                | Options of `useChooseText` (same as `ChooseTextControllerOptions`)                                         |
+| `UseChooseTextResult`                                                                                 | The return value of `useChooseText`                                                                        |
+| `UseFitTextOptions`                                                                                   | Options of `useFitText` (same as `FitTextControllerOptions`)                                               |
+| `UseFitTextResult`                                                                                    | The return value of `useFitText`                                                                           |
+| `TruncateTextProps<C>`, `ResizeTextProps<C>`, `ChooseTextProps<C>`, `FitTextProps<C>`                 | Props of the components created by the HOCs                                                                |
+| `TruncateTextComponent<C>`, `ResizeTextComponent<C>`, `ChooseTextComponent<C>`, `FitTextComponent<C>` | Components created by the HOCs                                                                             |
+| `WithTextFittingOptions`                                                                              | Options of the HOCs                                                                                        |
+| `FittingProps<C, V, O>`, `FittingComponent<C, V, O>`                                                  | The base types of the types above (built from the wrapped component, the value type, and the options type) |
