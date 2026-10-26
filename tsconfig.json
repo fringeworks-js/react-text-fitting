@@ -1,0 +1,10 @@
+{
+  "extends": "@fringeworks/dev/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    // @fringeworks/text-fitting は Intl.Segmenter（Firefox 125 以降）を簡易な分割への切り替え付きで使う。
+    // ローカルの開発ではそのソースを型チェックするため、同じく型だけを追加する
+    "lib": ["ES2021", "ES2022.Intl", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src", "stories", ".storybook", "globals.d.ts"]
+}
