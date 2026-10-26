@@ -12,11 +12,11 @@ import {
 /**
  * text-fitting の Controller に共通の形
  */
-type FittingController<S, O> = {
+type FittingController<T, S, O> = {
   attach(element: HTMLElement | null): void;
   getSnapshot(): S;
   subscribe(listener: () => void): () => void;
-  update(text: string, options?: O): void;
+  update(text: T, options?: O): void;
   refresh(): void;
 };
 
@@ -30,13 +30,13 @@ type FittingController<S, O> = {
  * - 計測の結果が変わっていたら、画面に表示する前に描画し直す
  *
  * @param create Controller を作る関数
- * @param text 文字列
+ * @param text 文字列（Controller によっては候補の配列）
  * @param options オプション
  * @returns snapshot、要素に渡す ref、計測し直す関数
  */
-export default function useFittingController<S extends object, O>(
-  create: (text: string, options?: O) => FittingController<S, O>,
-  text: string,
+export default function useFittingController<T, S extends object, O>(
+  create: (text: T, options?: O) => FittingController<T, S, O>,
+  text: T,
   options: O | undefined,
 ): S & { ref: RefCallback<HTMLElement>; refresh: () => void } {
   const [controller] = useState(() => create(text, options));

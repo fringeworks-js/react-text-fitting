@@ -4,8 +4,6 @@
 
 **[日本語のREADMEはこちら](./README.ja.md)**
 
-The current version provides a hook for truncation (`useTruncateText`) and a hook for resizing (`useResizeText`).
-
 ## Installation
 
 ```bash
@@ -66,10 +64,12 @@ function Description({ text }: { text: string }) {
 
 ## API
 
-| Function                          | Description                                                                              |
-| --------------------------------- | ---------------------------------------------------------------------------------------- |
-| `useTruncateText(text, options?)` | A hook that truncates a string to fit the element's size (width and height) and lines    |
-| `useResizeText(text, options?)`   | A hook that changes the font size to fit the element's size (width and height) and lines |
+| Function                              | Description                                                                                                    |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `useTruncateText(text, options?)`     | A hook that truncates a string to fit the element's size (width and height) and lines                          |
+| `useResizeText(text, options?)`       | A hook that changes the font size to fit the element's size (width and height) and lines                       |
+| `useChooseText(candidates, options?)` | A hook that chooses, from candidates, the expression that fits the element's size (width and height) and lines |
+| `useFitText(text, options?)`          | A hook that fits text into the element's size and lines by combining choosing, resizing, and truncating        |
 
 ### `useTruncateText`
 
@@ -130,6 +130,59 @@ The options are the same as `createResizeTextController` (`minFontSize`, `maxFon
 | `style`         | `ResizeTextStyle`          | The style to pass to the element (`whiteSpace`, `overflowWrap`, and the selected `fontSize`)           |
 | `refresh`       | `() => void`               | Measures again immediately with the current string and options                                         |
 
+### `useChooseText`
+
+```ts
+useChooseText(candidates: readonly string[], options?: UseChooseTextOptions): UseChooseTextResult
+```
+
+Chooses, from candidates, the expression that fits the element's size (width and height) and number of lines. It uses `createChooseTextController` from `@fringeworks/text-fitting`.
+
+- Order the candidates from most to least preferred. You may pass a new array on every render (if the contents are the same, nothing is measured again)
+- If no candidate fits, the last one is displayed and `isOverflowing` reports it
+- During server rendering and the first render of hydration, the first candidate is displayed
+
+```tsx
+function DateLabel({ date }: { date: Date }) {
+  const { ref, displayText, style } = useChooseText([
+    formatLong(date), // Monday, October 26, 2026
+    formatShort(date), // 2026/10/26
+    formatTiny(date), // 10/26
+  ]);
+  return (
+    <span ref={ref} style={{ display: 'block', ...style }}>
+      {displayText}
+    </span>
+  );
+}
+```
+
+The options are the same as `createChooseTextController` (`wrap`, `maxLines`, `disabled`). The return value is `ChooseTextSnapshot` (`displayText`, `index`, `isOverflowing`, `style`) plus `ref` and `refresh`.
+
+### `useFitText`
+
+```ts
+useFitText(text: string | readonly string[], options?: UseFitTextOptions): UseFitTextResult
+```
+
+Fits a string into the element's size (width and height) and number of lines by combining choosing among candidates, resizing, and truncating. It uses `createFitTextController` from `@fringeworks/text-fitting`. Each feature is enabled only when specified (candidates: pass an array as the first argument; resizing: `minFontSize` or `maxFontSize`; truncating: `truncate: true`). For the order in which they are tried and what each option means, see the [`@fringeworks/text-fitting` README](https://www.npmjs.com/package/@fringeworks/text-fitting).
+
+```tsx
+function Kpi({ value }: { value: number }) {
+  const { ref, displayText, style } = useFitText(
+    [formatFull(value), formatCompact(value)], // 1,234,567 / 1.2M
+    { minFontSize: 12, maxFontSize: 48, truncate: true },
+  );
+  return (
+    <div ref={ref} className="kpi" style={style}>
+      {displayText}
+    </div>
+  );
+}
+```
+
+The return value is `FitTextSnapshot` (`displayText`, `index`, `fontSize`, `isTruncated`, `isOverflowing`, `style`) plus `ref` and `refresh`. When resizing, specify the element's CSS font size with a class or inheritance, as with `useResizeText`.
+
 ### Types
 
 | Type                     | Description                                                            |
@@ -138,3 +191,7 @@ The options are the same as `createResizeTextController` (`minFontSize`, `maxFon
 | `UseTruncateTextResult`  | The return value of `useTruncateText`                                  |
 | `UseResizeTextOptions`   | Options of `useResizeText` (same as `ResizeTextControllerOptions`)     |
 | `UseResizeTextResult`    | The return value of `useResizeText`                                    |
+| `UseChooseTextOptions`   | Options of `useChooseText` (same as `ChooseTextControllerOptions`)     |
+| `UseChooseTextResult`    | The return value of `useChooseText`                                    |
+| `UseFitTextOptions`      | Options of `useFitText` (same as `FitTextControllerOptions`)           |
+| `UseFitTextResult`       | The return value of `useFitText`                                       |

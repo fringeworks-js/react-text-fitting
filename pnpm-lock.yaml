@@ -110,8 +110,8 @@ importers:
   .:
     dependencies:
       '@fringeworks/text-fitting':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
     devDependencies:
       '@fringeworks/dev':
         specifier: ^0.13.2
@@ -504,8 +504,8 @@ packages:
     peerDependencies:
       rollup: ^4.0.0
 
-  '@fringeworks/text-fitting@0.2.0':
-    resolution: {integrity: sha512-3/+OUHSUwNNbojHHeQLQPQ23i1gHtps6voNCM3xwPoVltSvIycZ1msDX0n2ZpgN05vIdeEJawHdy4UeXX9pUSQ==}
+  '@fringeworks/text-fitting@0.3.0':
+    resolution: {integrity: sha512-dAfyu6vW4lZwfV/LD42zwp3ZqjQ07zsdD4Hw8S3MbMiZhNr+xsphucAwd1kcgK6SquA5DgSJB3O8J7W8KQswXA==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -3055,7 +3055,7 @@ snapshots:
       sort-package-json: 3.7.1
       type-fest: 5.10.0
 
-  '@fringeworks/text-fitting@0.2.0': {}
+  '@fringeworks/text-fitting@0.3.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:
