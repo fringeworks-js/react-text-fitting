@@ -1,10 +1,10 @@
 'use client';
 
+import useConstant from '@fringeworks/react-utils/hooks/useConstant';
+import useRerender from '@fringeworks/react-utils/hooks/useRerender';
 import {
   useCallback,
   useLayoutEffect,
-  useReducer,
-  useState,
   useSyncExternalStore,
   type RefCallback,
 } from 'react';
@@ -39,13 +39,13 @@ export default function useFittingController<T, S extends object, O>(
   text: T,
   options: O | undefined,
 ): S & { ref: RefCallback<HTMLElement>; refresh: () => void } {
-  const [controller] = useState(() => create(text, options));
+  const controller = useConstant(() => create(text, options));
   const snapshot = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot,
     controller.getSnapshot,
   );
-  const [, rerender] = useReducer((count: number) => count + 1, 0);
+  const rerender = useRerender();
 
   const ref = useCallback(
     (element: HTMLElement | null) => {

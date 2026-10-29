@@ -23,6 +23,8 @@ export default _createFittingHoc<string | readonly string[], UseFitTextOptions>(
     wrap: true,
     maxLines: true,
     disabled: true,
+    detectionDelay: true,
+    hideWhilePending: true,
     ellipsis: true,
     truncatePosition: true,
     truncateBoundary: true,

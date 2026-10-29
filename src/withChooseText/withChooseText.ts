@@ -23,5 +23,7 @@ export default _createFittingHoc<readonly string[], UseChooseTextOptions>(
     wrap: true,
     maxLines: true,
     disabled: true,
+    detectionDelay: true,
+    hideWhilePending: true,
   },
 );

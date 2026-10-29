@@ -23,6 +23,8 @@ export default _createFittingHoc<string, UseResizeTextOptions>(
     wrap: true,
     maxLines: true,
     disabled: true,
+    detectionDelay: true,
+    hideWhilePending: true,
     minFontSize: true,
     maxFontSize: true,
   },

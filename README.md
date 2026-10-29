@@ -76,6 +76,43 @@ You decide how to combine it with your other styles. However, the following prop
 </h2>
 ```
 
+### Measuring again when the formatting changes
+
+The library measures again automatically when the element's size changes or fonts finish loading. It does not measure again when only the text formatting (`font-size`, `letter-spacing`, `font-weight`, and so on) changes while the element's size stays the same.
+
+With the components, pass the values that determine the formatting to `refreshOn`. The first-level properties are compared with `Object.is`, and when any of them changes, the text is measured again before the browser paints. You may write the object inline.
+
+```tsx
+<TruncateText
+  value={title}
+  className={className}
+  refreshOn={{ className, theme }}
+/>
+```
+
+- Only the first level is compared. Putting an object created during rendering (such as `{ style }`) measures again on every render. When you change the formatting with `style`, put the formatting values (such as `{ fontSize }`)
+- To measure again at any time, put the value of react-utils' `useExecutionMark` (`const [refreshAt, refresh] = useExecutionMark();` and `refreshOn={{ refreshAt }}`; it measures again every time `refresh()` is called)
+
+With the hooks, call the returned `refresh` after changing the formatting and before the browser paints. react-utils' `useChangeLayoutEffect` gives the same behavior as the components' `refreshOn` (it is not called on the first render, so nothing is measured twice).
+
+```tsx
+const { ref, displayText, style, refresh } = useTruncateText(text);
+// react-utils' useChangeLayoutEffect calls it before painting, only when the values change (not on the first render)
+useChangeLayoutEffect({ className }, refresh);
+```
+
+### Hiding the text while the size is changing
+
+While the window width is being dragged, for example, the text is measured every frame by default, and the displayed text changes every frame. With `detectionDelay` (ms), the text is measured after the size changes settle. Adding `hideWhilePending` hides the text while waiting (`visibility: hidden`; the element's size does not change).
+
+```tsx
+<TruncateText value={title} detectionDelay={150} hideWhilePending />
+```
+
+- With the hooks, the returned `isPending` tells whether it is waiting. Instead of hiding, you can render something else yourself (such as a skeleton)
+- Changing the text or the feature options, and measuring with `refresh` or `refreshOn`, do not wait
+- See "Measuring while changes continue" in the text-fitting README for details
+
 ### Expanding the full text with "Read more"
 
 ```tsx
@@ -233,41 +270,52 @@ The return value is `FitTextSnapshot` (`displayText`, `index`, `fontSize`, `isTr
 ### `withTruncateText`, `withResizeText`, `withChooseText`, `withFitText`
 
 ```ts
-withTruncateText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): TruncateTextComponent<C>
-withResizeText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): ResizeTextComponent<C>
-withChooseText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): ChooseTextComponent<C>
-withFitText<C extends ElementType>(Component: C, options?: WithTextFittingOptions): FitTextComponent<C>
+withTruncateText<C extends ElementType, K extends string = 'children'>(Component: C, options?: WithTextFittingOptions<K>): TruncateTextComponent<C, K>
+withResizeText<C extends ElementType, K extends string = 'children'>(Component: C, options?: WithTextFittingOptions<K>): ResizeTextComponent<C, K>
+withChooseText<C extends ElementType, K extends string = 'children'>(Component: C, options?: WithTextFittingOptions<K>): ChooseTextComponent<C, K>
+withFitText<C extends ElementType, K extends string = 'children'>(Component: C, options?: WithTextFittingOptions<K>): FitTextComponent<C, K>
 ```
 
 Creates a component with the features of each hook. Pass an element name (such as `'h2'`) or a component as `Component`. The created component accepts the following props.
 
-| Property        | Description                                                                                                                                                                                                                            |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `value`         | The value to display. `string` for `withTruncateText` and `withResizeText`, `readonly string[]` for `withChooseText` (representations of one value, from most to least preferred), and `string \| readonly string[]` for `withFitText` |
-| Feature options | The same as the options of the corresponding hook (`wrap`, `maxLines`, `disabled`, and so on)                                                                                                                                          |
-| `style`         | Layered on top of the library's style. For the same property, the style you specify wins                                                                                                                                               |
-| `ref`           | Receives the rendered element (combined with the ref the library uses)                                                                                                                                                                 |
-| Others          | Passed to `Component` as is                                                                                                                                                                                                            |
+| Property        | Description                                                                                                                                                                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`         | The value to display. `string` for `withTruncateText` and `withResizeText`, `readonly string[]` for `withChooseText` (representations of one value, from most to least preferred), and `string \| readonly string[]` for `withFitText`                                          |
+| Feature options | The same as the options of the corresponding hook (`wrap`, `maxLines`, `disabled`, and so on)                                                                                                                                                                                   |
+| `style`         | Layered on top of the library's style. For the same property, the style you specify wins                                                                                                                                                                                        |
+| `refreshOn?`    | Values that trigger measuring again (react-utils' `ChangeDependencies`). The first-level properties are compared with `Object.is`, and the text is measured again when any of them changes. Not passed to the element (see "Measuring again when the formatting changes" above) |
+| `ref`           | Receives the rendered element (combined with the ref the library uses)                                                                                                                                                                                                          |
+| Others          | Passed to `Component` as is                                                                                                                                                                                                                                                     |
 
 The text to display is passed to `Component` as `children`, so the created component does not accept `children`.
 
-| Option         | Type     | Description                                                                         |
-| -------------- | -------- | ----------------------------------------------------------------------------------- |
-| `displayName?` | `string` | The displayName of the component. Defaults to a name such as `withTruncateText(h2)` |
+With `displayTextProp`, the text is passed to the specified prop instead of `children` (for example, to wrap a component that receives the text as `value` or `label`). In that case, the created component accepts `children` and passes them to `Component` as is.
+
+```tsx
+const ReadOnlyField = withTruncateText('input', { displayTextProp: 'value' });
+<ReadOnlyField value={path} readOnly />;
+```
+
+The size and formatting that are measured are those of the element the `ref` is attached to. If `Component` renders the text in another inner element (such as a `<span>` with padding), the measurement and the display differ, and the text is not truncated correctly. Wrap a component that renders the text in the element the `ref` is attached to.
+
+| Option             | Type     | Description                                                                                  |
+| ------------------ | -------- | -------------------------------------------------------------------------------------------- |
+| `displayName?`     | `string` | The displayName of the component. Defaults to a name such as `withTruncateText(h2)`          |
+| `displayTextProp?` | `string` | The name of the `Component` prop that receives the text to display. Defaults to `'children'` |
 
 ### Types
 
-| Type                                                                                                  | Description                                                                                                |
-| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `UseTruncateTextOptions`                                                                              | Options of `useTruncateText` (same as `TruncateTextControllerOptions`)                                     |
-| `UseTruncateTextResult`                                                                               | The return value of `useTruncateText`                                                                      |
-| `UseResizeTextOptions`                                                                                | Options of `useResizeText` (same as `ResizeTextControllerOptions`)                                         |
-| `UseResizeTextResult`                                                                                 | The return value of `useResizeText`                                                                        |
-| `UseChooseTextOptions`                                                                                | Options of `useChooseText` (same as `ChooseTextControllerOptions`)                                         |
-| `UseChooseTextResult`                                                                                 | The return value of `useChooseText`                                                                        |
-| `UseFitTextOptions`                                                                                   | Options of `useFitText` (same as `FitTextControllerOptions`)                                               |
-| `UseFitTextResult`                                                                                    | The return value of `useFitText`                                                                           |
-| `TruncateTextProps<C>`, `ResizeTextProps<C>`, `ChooseTextProps<C>`, `FitTextProps<C>`                 | Props of the components created by the HOCs                                                                |
-| `TruncateTextComponent<C>`, `ResizeTextComponent<C>`, `ChooseTextComponent<C>`, `FitTextComponent<C>` | Components created by the HOCs                                                                             |
-| `WithTextFittingOptions`                                                                              | Options of the HOCs                                                                                        |
-| `FittingProps<C, V, O>`, `FittingComponent<C, V, O>`                                                  | The base types of the types above (built from the wrapped component, the value type, and the options type) |
+| Type                                                                                                              | Description                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `UseTruncateTextOptions`                                                                                          | Options of `useTruncateText` (same as `TruncateTextControllerOptions`)                                     |
+| `UseTruncateTextResult`                                                                                           | The return value of `useTruncateText`                                                                      |
+| `UseResizeTextOptions`                                                                                            | Options of `useResizeText` (same as `ResizeTextControllerOptions`)                                         |
+| `UseResizeTextResult`                                                                                             | The return value of `useResizeText`                                                                        |
+| `UseChooseTextOptions`                                                                                            | Options of `useChooseText` (same as `ChooseTextControllerOptions`)                                         |
+| `UseChooseTextResult`                                                                                             | The return value of `useChooseText`                                                                        |
+| `UseFitTextOptions`                                                                                               | Options of `useFitText` (same as `FitTextControllerOptions`)                                               |
+| `UseFitTextResult`                                                                                                | The return value of `useFitText`                                                                           |
+| `TruncateTextProps<C, K>`, `ResizeTextProps<C, K>`, `ChooseTextProps<C, K>`, `FitTextProps<C, K>`                 | Props of the components created by the HOCs                                                                |
+| `TruncateTextComponent<C, K>`, `ResizeTextComponent<C, K>`, `ChooseTextComponent<C, K>`, `FitTextComponent<C, K>` | Components created by the HOCs                                                                             |
+| `WithTextFittingOptions<K>`                                                                                       | Options of the HOCs                                                                                        |
+| `FittingProps<C, V, O, K>`, `FittingComponent<C, V, O, K>`                                                        | The base types of the types above (built from the wrapped component, the value type, and the options type) |

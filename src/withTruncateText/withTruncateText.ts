@@ -26,6 +26,8 @@ export default _createFittingHoc<string, UseTruncateTextOptions>(
     wrap: true,
     maxLines: true,
     disabled: true,
+    detectionDelay: true,
+    hideWhilePending: true,
     ellipsis: true,
     truncatePosition: true,
     truncateBoundary: true,

@@ -123,6 +123,153 @@ describe('withTruncateText', () => {
     );
   });
 
+  describe('displayTextProp', () => {
+    type LabelProps = ComponentProps<'div'> & { label?: string };
+    const Label = forwardRef<HTMLDivElement, LabelProps>(
+      ({ label, children, ...props }, ref) => (
+        <div ref={ref} data-children={String(children ?? '')} {...props}>
+          {label}
+        </div>
+      ),
+    );
+
+    it('表示する文字列を、指定したプロパティに渡す', () => {
+      const Wrapped = withTruncateText(Label, { displayTextProp: 'label' });
+      const { getByTestId } = render(
+        <Wrapped data-testid="host" value={LONG_TEXT} style={BOX} />,
+      );
+      const host = getByTestId('host');
+      expect(host.textContent!.endsWith('...')).toBe(true);
+      expect(isOverflowing(host)).toBe(false);
+    });
+
+    it('children 以外を指定した場合は、children をそのまま渡す', () => {
+      const Wrapped = withTruncateText(Label, { displayTextProp: 'label' });
+      const { getByTestId } = render(
+        <Wrapped data-testid="host" value="Hello" style={BOX}>
+          icon
+        </Wrapped>,
+      );
+      expect(getByTestId('host').dataset.children).toBe('icon');
+    });
+
+    it('value に渡すと、包んだコンポーネントの value に表示する文字列が入る', () => {
+      const Input = withTruncateText('input', { displayTextProp: 'value' });
+      const { getByTestId } = render(
+        <Input data-testid="host" value={LONG_TEXT} style={BOX} readOnly />,
+      );
+      const value = (getByTestId('host') as HTMLInputElement).value;
+      expect(value.endsWith('...')).toBe(true);
+      expect(value.length).toBeLessThan(LONG_TEXT.length);
+    });
+
+    it('型: 指定したプロパティは受け取らない', () => {
+      const Wrapped = withTruncateText(Label, { displayTextProp: 'label' });
+      // @ts-expect-error label はライブラリが渡すので受け取らない
+      const element = <Wrapped value="Hello" label="x" />;
+      expect(element).toBeTruthy();
+    });
+  });
+
+  it('detectionDelay・hideWhilePending を受け取り、要素には渡さない', () => {
+    const { getByTestId } = render(
+      <TruncateText
+        data-testid="host"
+        value={LONG_TEXT}
+        style={BOX}
+        detectionDelay={100}
+        hideWhilePending
+      />,
+    );
+    const host = getByTestId('host');
+    expect(host.hasAttribute('detectiondelay')).toBe(false);
+    expect(host.hasAttribute('hidewhilepending')).toBe(false);
+    expect(host.style.visibility).toBe('');
+  });
+
+  describe('refreshOn', () => {
+    // 大きさを固定し、書式（letter-spacing）を変えても要素の大きさが変わらないようにする
+    const FIXED_BOX = { ...BOX, height: 24 };
+    const TEXT = 'Hello world';
+
+    it('値が変わったら測り直す', () => {
+      const { getByTestId, rerender } = render(
+        <TruncateText
+          data-testid="host"
+          value={TEXT}
+          style={{ ...FIXED_BOX, letterSpacing: '0px' }}
+          refreshOn={{ spacing: 0 }}
+        />,
+      );
+      const host = getByTestId('host');
+      expect(host.textContent).toBe(TEXT);
+
+      rerender(
+        <TruncateText
+          data-testid="host"
+          value={TEXT}
+          style={{ ...FIXED_BOX, letterSpacing: '12px' }}
+          refreshOn={{ spacing: 12 }}
+        />,
+      );
+      expect(host.textContent!.endsWith('...')).toBe(true);
+      expect(isOverflowing(host)).toBe(false);
+    });
+
+    it('渡さない場合は、書式だけが変わっても測り直さない', () => {
+      const { getByTestId, rerender } = render(
+        <TruncateText
+          data-testid="host"
+          value={TEXT}
+          style={{ ...FIXED_BOX, letterSpacing: '0px' }}
+        />,
+      );
+      const host = getByTestId('host');
+
+      rerender(
+        <TruncateText
+          data-testid="host"
+          value={TEXT}
+          style={{ ...FIXED_BOX, letterSpacing: '12px' }}
+        />,
+      );
+      expect(host.textContent).toBe(TEXT);
+    });
+
+    it('値が同じなら、その場で作ったオブジェクトでも測り直さない', () => {
+      const { getByTestId, rerender } = render(
+        <TruncateText
+          data-testid="host"
+          value={TEXT}
+          style={{ ...FIXED_BOX, letterSpacing: '0px' }}
+          refreshOn={{ spacing: 0 }}
+        />,
+      );
+      const host = getByTestId('host');
+
+      rerender(
+        <TruncateText
+          data-testid="host"
+          value={TEXT}
+          style={{ ...FIXED_BOX, letterSpacing: '12px' }}
+          refreshOn={{ spacing: 0 }}
+        />,
+      );
+      expect(host.textContent).toBe(TEXT);
+    });
+
+    it('要素には渡さない', () => {
+      const { getByTestId } = render(
+        <TruncateText
+          data-testid="host"
+          value={TEXT}
+          refreshOn={{ spacing: 0 }}
+        />,
+      );
+      expect(getByTestId('host').hasAttribute('refreshon')).toBe(false);
+    });
+  });
+
   it('StrictMode でも動く', () => {
     const { getByTestId } = render(
       <StrictMode>
