@@ -1,5 +1,6 @@
 'use client';
 
+import { extractTruncateTextOptions } from '@fringeworks/text-fitting';
 import _createFittingHoc from '../_internal/_createFittingHoc';
 import {
   useTruncateText,
@@ -22,16 +23,5 @@ import {
 export default _createFittingHoc<string, UseTruncateTextOptions>(
   'withTruncateText',
   useTruncateText,
-  {
-    wrap: true,
-    maxLines: true,
-    disabled: true,
-    detectionDelay: true,
-    hideWhilePending: true,
-    ellipsis: true,
-    truncatePosition: true,
-    truncateBoundary: true,
-    locale: true,
-    maxChars: true,
-  },
+  extractTruncateTextOptions,
 );

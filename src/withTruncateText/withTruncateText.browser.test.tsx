@@ -1,5 +1,11 @@
 import { cleanup, render } from '@testing-library/react';
-import { createRef, forwardRef, StrictMode, type ComponentProps } from 'react';
+import {
+  createRef,
+  forwardRef,
+  StrictMode,
+  type ComponentProps,
+  type CSSProperties,
+} from 'react';
 import { TruncateText } from '../TruncateText';
 import withTruncateText from './withTruncateText';
 
@@ -185,6 +191,58 @@ describe('withTruncateText', () => {
     expect(host.hasAttribute('detectiondelay')).toBe(false);
     expect(host.hasAttribute('hidewhilepending')).toBe(false);
     expect(host.style.visibility).toBe('');
+  });
+
+  it('style の値が undefined のプロパティは、指定しなかったものとして扱い、ライブラリのスタイルを残す', () => {
+    const { getByTestId } = render(
+      <TruncateText
+        data-testid="host"
+        value={LONG_TEXT}
+        style={{ ...BOX, whiteSpace: undefined }}
+      />,
+    );
+    expect(getByTestId('host').style.whiteSpace).toBe('pre');
+  });
+
+  it('style は、利用者が指定したプロパティを後ろに並べる（省略形と個別指定が混ざっても、利用者の指定が勝つように）', () => {
+    let received: CSSProperties | undefined;
+    const Capture = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
+      (props, ref) => {
+        received = props.style;
+        return <div ref={ref} {...props} />;
+      },
+    );
+    const Wrapped = withTruncateText(Capture);
+    render(
+      <Wrapped value="Hello" style={{ ...BOX, whiteSpace: 'pre-wrap' }} />,
+    );
+    // ライブラリの whiteSpace の位置に残さず、利用者の指定の順に並べる
+    expect(Object.keys(received ?? {})).toEqual([
+      'width',
+      'fontSize',
+      'fontFamily',
+      'whiteSpace',
+    ]);
+    expect(received?.whiteSpace).toBe('pre-wrap');
+  });
+
+  it('frozen を受け取り、要素には渡さない。止めている間は省略せずに表示する', () => {
+    const { getByTestId, rerender } = render(
+      <TruncateText data-testid="host" value={LONG_TEXT} style={BOX} />,
+    );
+    const host = getByTestId('host');
+    const truncated = host.textContent;
+    expect(truncated).not.toBe(LONG_TEXT);
+
+    const next = `${LONG_TEXT} More text.`;
+    rerender(
+      <TruncateText data-testid="host" value={next} style={BOX} frozen />,
+    );
+    expect(host.hasAttribute('frozen')).toBe(false);
+    expect(host.textContent).toBe(next);
+
+    rerender(<TruncateText data-testid="host" value={next} style={BOX} />);
+    expect(host.textContent).not.toBe(next);
   });
 
   describe('refreshOn', () => {

@@ -110,11 +110,14 @@ importers:
   .:
     dependencies:
       '@fringeworks/react-utils':
-        specifier: ^0.11.0
-        version: 0.11.0(react@19.3.1)
+        specifier: ^0.12.0
+        version: 0.12.0(react@19.3.1)
       '@fringeworks/text-fitting':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
+      '@fringeworks/utils':
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@fringeworks/dev':
         specifier: ^0.13.2
@@ -502,8 +505,8 @@ packages:
       typescript:
         optional: true
 
-  '@fringeworks/react-utils@0.11.0':
-    resolution: {integrity: sha512-pLxw/piCVF6FmHXJjiwx97sbDA3JNqFFOGfZCFNKPS88zSdwU+/PQaDZfry6j9iPZK9VA3LApugw/wzMgZdIog==}
+  '@fringeworks/react-utils@0.12.0':
+    resolution: {integrity: sha512-D9/8E9xoH1+hSv7OkgjIa5zL3ipxAHN4TCpd8U2PxxG6iSGUfn1qTFgnNGrbhIwvxrvLrnqZ4G9GV2VuaFMEZw==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
 
@@ -512,8 +515,14 @@ packages:
     peerDependencies:
       rollup: ^4.0.0
 
-  '@fringeworks/text-fitting@0.4.0':
-    resolution: {integrity: sha512-nIN0tmXH7Gn8TF28xljq/xci0r/Uyr6YdlzPpc7JWSrqc2nkK4ERqXhGNhqrkfac8AXfFRzHWGSXc3VFs7OjKw==}
+  '@fringeworks/text-fitting@0.5.0':
+    resolution: {integrity: sha512-7HAyHKN7lztWu1Pdr3V9C8DutTnaaY+CnZk2FXF+Ib4R4LLIY5lSZHth+VHVz/ZlP8+KZwhRxY0TP5I+OxDx3A==}
+
+  '@fringeworks/types@1.0.0':
+    resolution: {integrity: sha512-o9co16ePKE1cL/Qpail6LnTVrTC/HeIATrYBDpNcd/aef2mNEVUdhVD2X001YdkpCAXnwgEjnmSOpBqMEtI4aA==}
+
+  '@fringeworks/utils@2.0.0':
+    resolution: {integrity: sha512-iCXRAvfGLgTfiWuzsCri6EhLXKG80+mVBiGHacZi96yy1W0RQR3HQxNwcixYlo001iy5PIA5fU1fqyu5d6fxtw==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -2008,6 +2017,10 @@ packages:
   keyv@5.6.0:
     resolution: {integrity: sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw==}
 
+  klona@2.0.6:
+    resolution: {integrity: sha512-dhG34DXATL5hSxJbIexCft8FChFXtmskoZYnoPWjXQuebWYCNkVeV3KkGegCK9CP1oswI/vQibS2GY7Em/sJJA==}
+    engines: {node: '>= 8'}
+
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -3056,7 +3069,7 @@ snapshots:
       - supports-color
       - vue-tsc
 
-  '@fringeworks/react-utils@0.11.0(react@19.3.1)':
+  '@fringeworks/react-utils@0.12.0(react@19.3.1)':
     dependencies:
       react: 19.3.1
 
@@ -3067,7 +3080,17 @@ snapshots:
       sort-package-json: 3.7.1
       type-fest: 5.10.0
 
-  '@fringeworks/text-fitting@0.4.0': {}
+  '@fringeworks/text-fitting@0.5.0':
+    dependencies:
+      '@fringeworks/utils': 2.0.0
+
+  '@fringeworks/types@1.0.0': {}
+
+  '@fringeworks/utils@2.0.0':
+    dependencies:
+      '@fringeworks/types': 1.0.0
+      klona: 2.0.6
+      remeda: 2.54.1
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -4343,6 +4366,8 @@ snapshots:
   keyv@5.6.0:
     dependencies:
       '@keyv/serialize': 1.1.1
+
+  klona@2.0.6: {}
 
   levn@0.4.1:
     dependencies:

@@ -1,5 +1,6 @@
 'use client';
 
+import { extractResizeTextOptions } from '@fringeworks/text-fitting';
 import _createFittingHoc from '../_internal/_createFittingHoc';
 import { useResizeText, type UseResizeTextOptions } from '../useResizeText';
 
@@ -19,13 +20,5 @@ import { useResizeText, type UseResizeTextOptions } from '../useResizeText';
 export default _createFittingHoc<string, UseResizeTextOptions>(
   'withResizeText',
   useResizeText,
-  {
-    wrap: true,
-    maxLines: true,
-    disabled: true,
-    detectionDelay: true,
-    hideWhilePending: true,
-    minFontSize: true,
-    maxFontSize: true,
-  },
+  extractResizeTextOptions,
 );

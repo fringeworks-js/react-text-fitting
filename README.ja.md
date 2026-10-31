@@ -113,6 +113,19 @@ useChangeLayoutEffect({ className }, refresh);
 - 文字列や機能のオプションを変えたときと、`refresh`・`refreshOn` による計測は待ちません
 - 詳しい動きは text-fitting の README の「変化が続くときの計測」を見てください
 
+### アニメーションの間は計測を止める
+
+文字列を続けて変えるアニメーション（数値のカウントアップなど）の間は、文字列が変わるたびに計測します。`frozen` を指定すると、指定している間は計測せず、最後に計測した結果（font-size・選んだ候補の位置）を保ったまま、今の文字列を表示します。`false` に戻すと、その場で計測します。
+
+```tsx
+<ResizeText value={format(count)} maxFontSize={48} frozen={isAnimating} />
+```
+
+- 止めている間は、文字列を省略する機能では、文字列が変わったら省略せずに表示します（はみ出しは CSS に任せます）
+- 止めている間は、`refresh`・`refreshOn` でも計測しません
+- アニメーションが終わったことを知らせるもの（`transitionend`、アニメーションのライブラリの完了時のコールバックなど）で `false` に戻してください
+- 詳しい動きは text-fitting の README の「計測を止める」を見てください
+
 ### 「続きを読む」で全文を展開する
 
 ```tsx

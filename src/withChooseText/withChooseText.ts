@@ -1,5 +1,6 @@
 'use client';
 
+import { extractChooseTextOptions } from '@fringeworks/text-fitting';
 import _createFittingHoc from '../_internal/_createFittingHoc';
 import { useChooseText, type UseChooseTextOptions } from '../useChooseText';
 
@@ -19,11 +20,5 @@ import { useChooseText, type UseChooseTextOptions } from '../useChooseText';
 export default _createFittingHoc<readonly string[], UseChooseTextOptions>(
   'withChooseText',
   useChooseText,
-  {
-    wrap: true,
-    maxLines: true,
-    disabled: true,
-    detectionDelay: true,
-    hideWhilePending: true,
-  },
+  extractChooseTextOptions,
 );

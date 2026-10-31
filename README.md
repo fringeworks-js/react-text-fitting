@@ -113,6 +113,19 @@ While the window width is being dragged, for example, the text is measured every
 - Changing the text or the feature options, and measuring with `refresh` or `refreshOn`, do not wait
 - See "Measuring while changes continue" in the text-fitting README for details
 
+### Freezing measurement during an animation
+
+During an animation that keeps changing the string (such as counting up a number), the text is measured every time the string changes. While `frozen` is specified, the text is not measured, and the current string is displayed while keeping the last measured result (the font size and the position of the chosen candidate). Setting it back to `false` measures on the spot.
+
+```tsx
+<ResizeText value={format(count)} maxFontSize={48} frozen={isAnimating} />
+```
+
+- While frozen, features that truncate display a changed string without truncating it (overflow is left to CSS)
+- While frozen, `refresh` and `refreshOn` do not measure either
+- Set it back to `false` with whatever tells you the animation has ended (`transitionend`, a completion callback of your animation library, and so on)
+- See "Freezing measurement" in the text-fitting README for details
+
 ### Expanding the full text with "Read more"
 
 ```tsx
